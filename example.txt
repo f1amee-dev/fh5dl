@@ -1,0 +1,9 @@
+# example batch download file
+# each line should contain the fliphtml5 url or id
+# you can add comments with # at the beginning of the line
+# empty lines are ignored
+
+# example entries (these are not real, replace with actual ids):
+# abcde/fghij
+# https://online.fliphtml5.com/abcde/fghij/
+# abcde/klmno/ 
