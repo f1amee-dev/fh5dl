@@ -1,0 +1,30 @@
+# Binary distribution directory
+dist/
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# macOS files
+.DS_Store
+
+# Temp directories
+tmp/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
