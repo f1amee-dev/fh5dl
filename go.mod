@@ -13,7 +13,7 @@ require (
 	github.com/pdfcpu/pdfcpu v0.8.0
 	github.com/schollz/progressbar/v3 v3.14.2
 	github.com/ztrue/tracerr v0.4.0
-	golang.org/x/sync v0.13.0
+	golang.org/x/sync v0.15.0
 )
 
 require (
