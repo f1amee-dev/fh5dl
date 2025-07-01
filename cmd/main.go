@@ -545,7 +545,8 @@ func downloadPdf2(ctx context.Context, args *Args) error {
 	}
 
 	// Check if PDF already exists
-	pdfPath := filepath.Join(outputDir, b.Title+".pdf")
+	sanitizedTitle := sanitizeFilename(b.Title)
+	pdfPath := filepath.Join(outputDir, sanitizedTitle+".pdf")
 	if _, err := os.Stat(pdfPath); err == nil && !args.Force {
 		fmt.Printf("PDF %s already exists. Skipping.\n", pdfPath)
 		return nil
@@ -751,4 +752,13 @@ func extractPageNumber(filename string) int {
 func runTerminalUI() {
 	// Call the terminal UI implementation from termui.go
 	RunTerminalUI()
+}
+
+// sanitizeFilename sanitizes a filename to remove invalid characters
+func sanitizeFilename(filename string) string {
+	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
+	for _, char := range invalidChars {
+		filename = strings.ReplaceAll(filename, char, "")
+	}
+	return filename
 }

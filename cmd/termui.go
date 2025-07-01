@@ -229,8 +229,18 @@ func (m uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "n", "N":
 			if m.selected && m.downloadType == "batch" {
+				// Handle "no" answer for batch confirmation
 				m.confirmation = "" // Reset confirmation
 				m.selected = false  // Go back to main menu
+			} else {
+				// Treat it as a normal character input
+				if keyMsg.Type == tea.KeyRunes {
+					if m.selected && m.downloadType == "single" {
+						m.url += string(keyMsg.Runes)
+					} else if m.settingsMode && m.editingValue {
+						m.editValue += string(keyMsg.Runes)
+					}
+				}
 			}
 		case "backspace":
 			if m.selected && m.downloadType == "single" && len(m.url) > 0 {
@@ -240,10 +250,12 @@ func (m uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		default:
 			// Add the typed character to the URL or setting value
-			if m.selected && m.downloadType == "single" && len(keyMsg.String()) == 1 {
-				m.url += keyMsg.String()
-			} else if m.settingsMode && m.editingValue && len(keyMsg.String()) == 1 {
-				m.editValue += keyMsg.String()
+			if keyMsg.Type == tea.KeyRunes {
+				if m.selected && m.downloadType == "single" {
+					m.url += string(keyMsg.Runes)
+				} else if m.settingsMode && m.editingValue {
+					m.editValue += string(keyMsg.Runes)
+				}
 			}
 		}
 	}

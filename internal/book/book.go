@@ -9,6 +9,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -718,15 +719,23 @@ func CaptureInteractivePageQuiet(ctx context.Context, pageUrl string, outputFold
 }
 
 func ParseId(idOrUrl string) (string, error) {
-	trimmed := strings.TrimPrefix(idOrUrl, "https://online.fliphtml5.com/")
-	trimmed = strings.TrimSuffix(trimmed, "http://online.fliphtml5.com/")
-
-	matches := idRegex.FindStringSubmatch(trimmed)
-	if matches == nil || len(matches) < 2 {
-		return "", fmt.Errorf("invalid ID or URL: %s", trimmed)
+	// First, check if the given string already looks like an ID (e.g. "abcde/fg123")
+	if matches := idRegex.FindStringSubmatch(idOrUrl); matches != nil && len(matches) >= 2 {
+		return matches[1], nil
 	}
 
-	return matches[1], nil
+	// Try to parse it as a URL and extract the path components
+	if u, err := url.Parse(idOrUrl); err == nil && u.Host != "" {
+		// Trim leading and trailing slashes from the path
+		trimmedPath := strings.Trim(u.Path, "/")
+		// The ID in a FlipHTML5 URL is always the first two path segments: <account>/<book>
+		matches := idRegex.FindStringSubmatch(trimmedPath)
+		if matches != nil && len(matches) >= 2 {
+			return matches[1], nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid ID or URL: %s", idOrUrl)
 }
 
 func downloadHtmlConfig(id string) (*htmlConfig, error) {

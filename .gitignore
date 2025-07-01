@@ -28,3 +28,7 @@ tmp/
 .vscode/
 *.swp
 *.swo
+
+# build artifacts
+cmd/cmd
+cmd/output/
