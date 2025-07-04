@@ -110,8 +110,15 @@ func (m uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		// handle key presses
 		switch msg.String() {
-		case "ctrl+c", "q":
-			if !m.selected && !m.settingsMode {
+		case "ctrl+c":
+			return m, tea.Quit
+		case "q":
+			// Treat 'q' as a normal character if we're typing a URL or setting value.
+			if m.selected && m.downloadType == "single" {
+				m.url += "q"
+			} else if m.settingsMode && m.editingValue {
+				m.editValue += "q"
+			} else if !m.selected && !m.settingsMode {
 				return m, tea.Quit
 			} else if m.settingsMode {
 				// exit settings mode
@@ -224,8 +231,17 @@ func (m uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Handled above
 		case "y", "Y":
 			if m.selected && m.downloadType == "batch" {
+				// confirm batch start
 				m.confirmation = "y"
-				return m, tea.Quit // Exit and start the download
+				return m, tea.Quit
+			} else {
+				if keyMsg.Type == tea.KeyRunes {
+					if m.selected && m.downloadType == "single" {
+						m.url += string(keyMsg.Runes)
+					} else if m.settingsMode && m.editingValue {
+						m.editValue += string(keyMsg.Runes)
+					}
+				}
 			}
 		case "n", "N":
 			if m.selected && m.downloadType == "batch" {
