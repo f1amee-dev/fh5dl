@@ -788,20 +788,24 @@ func Get(idOrUrl string) (*Book, error) {
 		case []interface{}:
 			for _, img := range v {
 				if imgStr, ok := img.(string); ok {
-					// Check if imgStr starts with "files/" as seen in the config
-					if strings.HasPrefix(imgStr, "files/") {
-						images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/%s", id, imgStr))
+					// Clean leading "./" which appears in some configs
+					trimmed := strings.TrimPrefix(imgStr, "./")
+					// If the path already starts with "files/" it is a full relative path, otherwise assume it's just the filename.
+					if strings.HasPrefix(trimmed, "files/") {
+						images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/%s", id, trimmed))
 					} else {
-						images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/files/large/%s", id, imgStr))
+						images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/files/large/%s", id, trimmed))
 					}
 				}
 			}
 		case string:
-			// Check if v starts with "files/" as seen in the config
-			if strings.HasPrefix(v, "files/") {
-				images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/%s", id, v))
+			// Clean leading "./" which appears in some configs
+			trimmed := strings.TrimPrefix(v, "./")
+			// If the path already starts with "files/" it is a full relative path, otherwise assume it's just the filename.
+			if strings.HasPrefix(trimmed, "files/") {
+				images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/%s", id, trimmed))
 			} else {
-				images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/files/large/%s", id, v))
+				images = append(images, fmt.Sprintf("https://online.fliphtml5.com/%s/files/large/%s", id, trimmed))
 			}
 		}
 
@@ -903,10 +907,47 @@ func (i *PageImage) Download(ctx context.Context, outputFolder string) (*Downloa
 		}
 
 		if res.StatusCode != http.StatusOK {
+			// Try alternative URL forms
+			candidates := []string{}
+			if strings.Contains(i.Url, "/files/large/") {
+				candidates = append(candidates, strings.Replace(i.Url, "/files/large/", "/files/", 1))
+			}
+			if strings.HasSuffix(i.Url, ".webp") {
+				base := strings.TrimSuffix(i.Url, ".webp")
+				candidates = append(candidates, base+".jpg", base+".png")
+			}
+			for _, alt := range candidates {
+				reqAlt, errAlt := http.NewRequestWithContext(ctx, http.MethodGet, alt, nil)
+				if errAlt != nil {
+					continue
+				}
+				resAlt, errAlt := client.Do(reqAlt)
+				if errAlt == nil && resAlt.StatusCode == http.StatusOK {
+					i.Url = alt
+					res = resAlt
+					goto OK
+				}
+			}
+			altUrl := strings.Replace(i.Url, "/files/large/", "/files/", 1)
+			// quick retry with alternate URL (no recursion, single attempt)
+			reqAlt, errAlt := http.NewRequestWithContext(ctx, http.MethodGet, altUrl, nil)
+			if errAlt == nil {
+				resAlt, errAlt := client.Do(reqAlt)
+				if errAlt == nil && resAlt.StatusCode == http.StatusOK {
+					// swap URL and response for normal processing
+					i.Url = altUrl
+					res = resAlt
+				} else {
+					// fall through to continue retries
+					lastErr = fmt.Errorf("failed to download image (status: %s)", res.Status)
+					continue
+				}
+			}
 			lastErr = fmt.Errorf("failed to download image (status: %s)", res.Status)
 			continue
 		}
 
+	OK:
 		// Create the output file
 		file, err := os.Create(fullPath)
 		if err != nil {
