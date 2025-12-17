@@ -15,7 +15,7 @@ A Go-based tool for downloading and generating PDFs from FlipHTML5 publications.
 
 ### From Releases
 
-Download the latest binary from the [Releases](https://github.com/ygunayer/fh5dl/releases) page for your platform.
+Download the latest binary from the [Releases](https://github.com/f1amee-dev/fh5dl/releases) page for your platform.
 
 ### From Source
 
