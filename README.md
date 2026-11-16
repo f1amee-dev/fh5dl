@@ -121,7 +121,7 @@ Private or removed books fail with a clear `403` or `404` message. fh5dl only do
 
 FlipHTML5 now encodes the page list inside each book's `javascript/config.js`. fh5dl decodes that in plain Go, so there's no browser or Chrome involved. It then downloads the page images in parallel over one shared connection pool and builds the PDF. Before saving, it checks that the page count matches the book.
 
-Temporary files and half written PDFs are cleaned up. Timeouts, dropped connections, `429` and `5xx` responses are retried up to three times. Missing pages are not retried.
+Temporary files and half written PDFs are cleaned up. Timeouts, dropped connections, `429` and `5xx` responses get up to three attempts. Missing pages are not retried.
 
 There's also a hidden `--check` flag that fetches every page image and prints a JSON line per book without writing any PDFs. It's handy for testing many books at once.
 
