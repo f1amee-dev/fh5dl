@@ -61,8 +61,14 @@ case ":$PATH:" in
 	*zsh) rc=$HOME/.zshrc line="export PATH=$(q "$dir"):\"\$PATH\"" ;;
 	*bash)
 		rc=$HOME/.bashrc line="export PATH=$(q "$dir"):\"\$PATH\""
-		# macOS Terminal starts bash as a login shell, which skips .bashrc.
-		[ "$os" = darwin ] && rc=$HOME/.bash_profile
+		# macOS Terminal starts bash as a login shell, which skips .bashrc and
+		# reads only the first of these that exists.
+		if [ "$os" = darwin ]; then
+			rc=$HOME/.bash_profile
+			for f in .bash_profile .bash_login .profile; do
+				[ -f "$HOME/$f" ] && rc=$HOME/$f && break
+			done
+		fi
 		;;
 	*fish)
 		rc=$HOME/.config/fish/conf.d/fh5dl.fish line="set -gx PATH $(q "$dir") \$PATH"
