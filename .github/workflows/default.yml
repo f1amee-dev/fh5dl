@@ -16,6 +16,8 @@ jobs:
       - run: go vet ./...
       - run: go test -race ./...
       - run: go build ./cmd/fh5dl
+      - name: install.sh installs the latest release
+        run: FH5DL_DIR="$RUNNER_TEMP/bin" sh install.sh && "$RUNNER_TEMP/bin/fh5dl" --version
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - uses: goreleaser/goreleaser-action@v6
         with:
@@ -30,3 +32,8 @@ jobs:
           go-version-file: go.mod
           cache: true
       - run: go test ./...
+      - name: install.ps1 installs the latest release
+        shell: pwsh
+        run: |
+          ./install.ps1
+          & "$env:LOCALAPPDATA\Programs\fh5dl\fh5dl.exe" --version
