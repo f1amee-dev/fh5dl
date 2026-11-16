@@ -23,19 +23,30 @@ Save FlipHTML5 books as PDFs. Paste a link, get a PDF.
 
 ---
 
-## Quick start
-
-```sh
-fh5dl https://online.fliphtml5.com/kzpyj/meoo/
-```
-
-The PDF lands in the current folder, named after the book. That's the whole thing.
-
-Prefer not to type flags? Run `fh5dl tui` and paste the link into the prompt.
-
 ## Install
 
-**Prebuilt binary.** Grab the button for your system above, unzip it, and put `fh5dl` somewhere on your `PATH`, such as `/usr/local/bin`. On Windows, put `fh5dl.exe` in a folder that's on your `Path`. Each release ships a `checksums.txt` if you want to verify the download.
+Pick your system and paste one line into a terminal.
+
+**macOS or Linux** (open the Terminal app):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/f1amee-dev/fh5dl/main/install.sh | sh
+```
+
+**Windows** (open PowerShell from the Start menu):
+
+```powershell
+irm https://raw.githubusercontent.com/f1amee-dev/fh5dl/main/install.ps1 | iex
+```
+
+That's it. The script downloads the latest release for your computer, checks it against the published checksum, puts it on your `PATH`, and opens a new terminal window in your Downloads folder with fh5dl ready to go. You don't need admin rights or Go.
+
+On Windows you'll also get an **fh5dl** entry in the Start menu that opens the same ready-to-use window.
+
+<details>
+<summary>Other ways to install</summary>
+
+**Manual download.** Use one of the buttons at the top of this page, unzip it, and move `fh5dl` (or `fh5dl.exe`) into a folder on your `PATH`. Each release has a `checksums.txt` for verifying the file. On macOS, a binary downloaded with a browser gets blocked by Gatekeeper the first time. Run `xattr -d com.apple.quarantine ./fh5dl` once to allow it.
 
 **With Go** (1.27 or newer):
 
@@ -43,8 +54,31 @@ Prefer not to type flags? Run `fh5dl tui` and paste the link into the prompt.
 go install github.com/f1amee-dev/fh5dl/v2/cmd/fh5dl@latest
 ```
 
-> [!NOTE]
-> On macOS, the first run of a downloaded binary may be blocked by Gatekeeper. Run `xattr -d com.apple.quarantine ./fh5dl` once, or install with `go install`.
+**Choose the install folder.** By default `install.sh` uses `/usr/local/bin` if it can write there, and `~/.local/bin` if it can't. Set `FH5DL_DIR` to pick another folder:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/f1amee-dev/fh5dl/main/install.sh | FH5DL_DIR=~/bin sh
+```
+
+**Skip the new window.** Add `FH5DL_NO_OPEN=1` before `sh` (or set it in PowerShell with `$env:FH5DL_NO_OPEN=1`). It's skipped automatically over SSH and in CI.
+
+**Update.** Run the same install line again.
+
+**Uninstall.** Delete the `fh5dl` file and the `# fh5dl` PATH line the installer added to your shell profile (`~/.zshrc`, `~/.bashrc` or `~/.profile`). On Windows, delete `%LOCALAPPDATA%\Programs\fh5dl` and the `fh5dl` Start menu shortcut.
+
+</details>
+
+## Quick start
+
+In the window the installer opened (or any new terminal), type `fh5dl`, a space, then paste a book link:
+
+```sh
+fh5dl https://online.fliphtml5.com/kzpyj/meoo/
+```
+
+The PDF is saved in the folder the terminal is in, named after the book. In the installer's window that's your Downloads folder.
+
+Prefer a prompt? Run `fh5dl tui` and paste the link there.
 
 ## Usage
 
@@ -64,7 +98,7 @@ fh5dl -i ./book-lists -o ./pdfs
 # from another command
 cat books.txt | fh5dl -i -
 
-# interactive mode
+# interactive prompt
 fh5dl tui
 ```
 
