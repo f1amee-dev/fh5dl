@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/f1amee-dev/fh5dl/internal/book"
+	"github.com/f1amee-dev/fh5dl/v2/internal/book"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
 )
@@ -91,7 +91,24 @@ func Run(ctx context.Context, args []string, in io.Reader, out, stderr io.Writer
 		}
 		return runTUI(ctx, opts, seed, in, out, stderr)
 	}
-	ids, err := collect(args, inputs, in)
+	// Reading stdin can block indefinitely, so stop waiting on Ctrl-C.
+	type collected struct {
+		ids []string
+		err error
+	}
+	done := make(chan collected, 1)
+	go func() {
+		ids, err := collect(args, inputs, in)
+		done <- collected{ids, err}
+	}()
+	var ids []string
+	var err error
+	select {
+	case c := <-done:
+		ids, err = c.ids, c.err
+	case <-ctx.Done():
+		return 130
+	}
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2

@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 
-	"github.com/f1amee-dev/fh5dl/internal/app"
+	"github.com/f1amee-dev/fh5dl/v2/internal/app"
 )
 
 var version, commit string

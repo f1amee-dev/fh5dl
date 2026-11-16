@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/f1amee-dev/fh5dl/internal/book"
+	"github.com/f1amee-dev/fh5dl/v2/internal/book"
 )
 
 func collect(args, inputs []string, stdin io.Reader) ([]string, error) {

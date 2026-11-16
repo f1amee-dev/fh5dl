@@ -9,7 +9,7 @@ Download an archive for your OS and architecture from [Releases](https://github.
 With Go 1.27.4 or later:
 
 ```sh
-go install github.com/f1amee-dev/fh5dl/cmd/fh5dl@latest
+go install github.com/f1amee-dev/fh5dl/v2/cmd/fh5dl@latest
 ```
 
 ## Usage

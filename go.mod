@@ -1,4 +1,4 @@
-module github.com/f1amee-dev/fh5dl
+module github.com/f1amee-dev/fh5dl/v2
 
 go 1.27.4
 
