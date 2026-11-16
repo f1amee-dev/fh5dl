@@ -23,7 +23,7 @@ import (
 )
 
 func TestParseID(t *testing.T) {
-	for _, s := range []string{"pub/book", "https://online.fliphtml5.com/pub/book", "online.fliphtml5.com/pub/book/", "https://online.fliphtml5.com/pub/book/index.html#p=3", "https://online.fliphtml5.com/pub/book/?x=y", "fliphtml5.com/pub/book/a-title/", "http://online.fliphtml5.com/pub/book"} {
+	for _, s := range []string{"pub/book", "https://online.fliphtml5.com/pub/book", "online.fliphtml5.com/pub/book/", "https://online.fliphtml5.com/pub/book/index.html#p=3", "https://online.fliphtml5.com/pub/book/?x=y", "fliphtml5.com/pub/book/a-title/", "http://online.fliphtml5.com/pub/book", "www.fliphtml5.com/pub/book/a-title/"} {
 		t.Run(s, func(t *testing.T) {
 			id, err := ParseID(s)
 			if err != nil || id != "pub/book" {
@@ -263,7 +263,16 @@ func TestSettingsAndUnknownShapes(t *testing.T) {
 	if err != nil || b.Pages[0] != "https://cdn.example/hi/x.jpg" {
 		t.Fatal(b, err)
 	}
-	for _, data := range []string{`{"bookConfig":{"totalPageCount":2},"fliphtml5_pages":[{"n":"1.jpg"}]}`, `{"fliphtml5_pages":[{"n":"1.jpg","unexpected":true}]}`, `{"fliphtml5_pages":[{"n":42}]}`, `{"bookConfig":{"largePath":["a","b"]},"fliphtml5_pages":[{"n":"1.jpg"}]}`} {
+	// New viewer keys and an empty largePath must not break downloads.
+	for _, data := range []string{`{"fliphtml5_pages":[{"n":"1.jpg","future":true}]}`, `{"bookConfig":{"largePath":"","normalPath":["files/page/"]},"fliphtml5_pages":[{"n":"1.jpg"}]}`} {
+		if b, err = ParseConfig("pub/book", []byte(data)); err != nil {
+			t.Fatal(data, err)
+		}
+	}
+	if b.Pages[0] != "https://online.fliphtml5.com/pub/book/files/page/1.jpg" {
+		t.Fatal(b.Pages)
+	}
+	for _, data := range []string{`{"bookConfig":{"totalPageCount":2},"fliphtml5_pages":[{"n":"1.jpg"}]}`, `{"fliphtml5_pages":[{"n":42}]}`, `{"bookConfig":{"largePath":["a","b"]},"fliphtml5_pages":[{"n":"1.jpg"}]}`} {
 		if _, err := ParseConfig("pub/book", []byte(data)); err == nil {
 			t.Fatal("unknown/incomplete config accepted", data)
 		}

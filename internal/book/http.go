@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -39,10 +40,10 @@ func NewClient(jobs int) *http.Client {
 
 func retryDelay(h string, attempt int) time.Duration {
 	if n, err := strconv.ParseUint(h, 10, 32); err == nil {
-		return time.Duration(n) * time.Second
+		return min(time.Duration(n)*time.Second, 30*time.Second)
 	}
 	if t, err := http.ParseTime(h); err == nil {
-		return max(0, time.Until(t))
+		return min(max(0, time.Until(t)), 30*time.Second)
 	}
 	return (250 * time.Millisecond << attempt) + time.Duration(rand.Int64N(int64(250*time.Millisecond)))
 }
@@ -58,7 +59,8 @@ func wait(ctx context.Context, d time.Duration) error {
 }
 func transient(err error) bool {
 	var n net.Error
-	return errors.As(err, &n) && n.Timeout() || errors.Is(err, io.ErrUnexpectedEOF)
+	return errors.As(err, &n) && n.Timeout() || errors.Is(err, io.ErrUnexpectedEOF) ||
+		errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE)
 }
 
 func (e *Engine) fetch(ctx context.Context, u string, limit int64) ([]byte, error) {

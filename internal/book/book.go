@@ -19,7 +19,7 @@ var idPart = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 func ParseID(input string) (string, error) {
 	s := strings.TrimSpace(input)
 	if !strings.Contains(s, "://") {
-		if strings.HasPrefix(s, "online.fliphtml5.com/") || strings.HasPrefix(s, "fliphtml5.com/") {
+		if strings.HasPrefix(s, "online.fliphtml5.com/") || strings.HasPrefix(s, "fliphtml5.com/") || strings.HasPrefix(s, "www.fliphtml5.com/") {
 			s = "https://" + s
 		} else {
 			s = "https://online.fliphtml5.com/" + s
@@ -29,7 +29,7 @@ func ParseID(input string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid book URL: %w", err)
 	}
-	if u.Scheme != "http" && u.Scheme != "https" || u.User != nil || u.Port() != "" || (u.Host != "online.fliphtml5.com" && u.Host != "fliphtml5.com") {
+	if u.Scheme != "http" && u.Scheme != "https" || u.User != nil || u.Port() != "" || (u.Host != "online.fliphtml5.com" && u.Host != "fliphtml5.com" && u.Host != "www.fliphtml5.com") {
 		return "", fmt.Errorf("unsupported host: use online.fliphtml5.com or fliphtml5.com")
 	}
 	p := strings.Split(strings.Trim(u.Path, "/"), "/")
@@ -87,9 +87,10 @@ func ParseConfig(id string, data []byte) (Book, error) {
 		return Book{}, fmt.Errorf("page list: %w", err)
 	}
 	var pages []page
-	pageDecoder := json.NewDecoder(bytes.NewReader(raw))
-	pageDecoder.DisallowUnknownFields()
-	if err := pageDecoder.Decode(&pages); err != nil {
+	// Unknown page keys are tolerated: the image, dimension and presentation
+	// checks below reject anything that would change the PDF. Decode (not
+	// Unmarshal) skips the viewer's trailing marker after the array.
+	if err := json.NewDecoder(bytes.NewReader(raw)).Decode(&pages); err != nil {
 		return Book{}, fmt.Errorf("page list: %w", err)
 	}
 	if len(pages) == 0 {
@@ -124,11 +125,10 @@ func ParseConfig(id string, data []byte) (Book, error) {
 				return Book{}, fmt.Errorf("incomplete page list: decoded %d pages, bookConfig declares %d", len(pages), n)
 			}
 		}
-		pathRaw := settings.Large
-		if len(pathRaw) == 0 || string(pathRaw) == "null" {
-			pathRaw = settings.Normal
+		paths, err := imageNames(settings.Large)
+		if err == nil && len(paths) == 0 {
+			paths, err = imageNames(settings.Normal)
 		}
-		paths, err := imageNames(pathRaw)
 		if err != nil || len(paths) > 1 {
 			return Book{}, fmt.Errorf("bookConfig: unsupported image base paths")
 		}
