@@ -1,75 +1,152 @@
+<div align="center">
+
 # fh5dl
 
-Download public FlipHTML5 books as PDFs. Version 2 reads the viewer's encoded page lists in pure Go, downloads pages concurrently, and checks the PDF page count before saving.
+Save FlipHTML5 books as PDFs. Paste a link, get a PDF.
+
+[![Release](https://img.shields.io/github/v/release/f1amee-dev/fh5dl?style=flat-square&color=2ea44f)](https://github.com/f1amee-dev/fh5dl/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/f1amee-dev/fh5dl/default.yml?branch=main&style=flat-square&label=CI)](https://github.com/f1amee-dev/fh5dl/actions/workflows/default.yml)
+[![Go](https://img.shields.io/github/go-mod/go-version/f1amee-dev/fh5dl?style=flat-square&logo=go&logoColor=white)](go.mod)
+[![Downloads](https://img.shields.io/github/downloads/f1amee-dev/fh5dl/total?style=flat-square&color=blue)](https://github.com/f1amee-dev/fh5dl/releases)
+[![License](https://img.shields.io/github/license/f1amee-dev/fh5dl?style=flat-square)](LICENSE)
+
+**Download for your system**
+
+[![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple_Silicon-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/f1amee-dev/fh5dl/releases/latest/download/fh5dl_darwin_arm64.tar.gz)
+[![macOS Intel](https://img.shields.io/badge/macOS-Intel-555555?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/f1amee-dev/fh5dl/releases/latest/download/fh5dl_darwin_amd64.tar.gz)
+[![Windows](https://img.shields.io/badge/Windows-x64-0078D4?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0wIDBoMTF2MTFIMHpNMTMgMGgxMXYxMUgxM3pNMCAxM2gxMXYxMUgwek0xMyAxM2gxMXYxMUgxM3oiLz48L3N2Zz4=)](https://github.com/f1amee-dev/fh5dl/releases/latest/download/fh5dl_windows_amd64.zip)
+[![Linux](https://img.shields.io/badge/Linux-x64-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/f1amee-dev/fh5dl/releases/latest/download/fh5dl_linux_amd64.tar.gz)
+
+<sub>Other builds (Windows ARM, Linux ARM) are on the <a href="https://github.com/f1amee-dev/fh5dl/releases/latest">releases page</a>.</sub>
+
+</div>
+
+---
+
+## Quick start
+
+```sh
+fh5dl https://online.fliphtml5.com/kzpyj/meoo/
+```
+
+The PDF lands in the current folder, named after the book. That's the whole thing.
+
+Prefer not to type flags? Run `fh5dl tui` and paste the link into the prompt.
 
 ## Install
 
-Download an archive for your OS and architecture from [Releases](https://github.com/f1amee-dev/fh5dl/releases), verify it against `checksums.txt`, and put `fh5dl` on your PATH. macOS, Linux and Windows binaries support amd64 and arm64, without CGO or Chrome.
+**Prebuilt binary.** Grab the button for your system above, unzip it, and put `fh5dl` somewhere on your `PATH`, such as `/usr/local/bin`. On Windows, put `fh5dl.exe` in a folder that's on your `Path`. Each release ships a `checksums.txt` if you want to verify the download.
 
-With Go 1.27.4 or later:
+**With Go** (1.27 or newer):
 
 ```sh
 go install github.com/f1amee-dev/fh5dl/v2/cmd/fh5dl@latest
 ```
 
+> [!NOTE]
+> On macOS, the first run of a downloaded binary may be blocked by Gatekeeper. Run `xattr -d com.apple.quarantine ./fh5dl` once, or install with `go install`.
+
 ## Usage
 
 ```sh
-fh5dl https://online.fliphtml5.com/kzpyj/meoo/
-fh5dl -o ./pdfs -j 8 kzpyj/naht kzpyj/mdmp
-fh5dl --force --keep-images kzpyj/meoo
-fh5dl --lossless kzpyj/meoo
-fh5dl -i books.txt -i more-books.txt
-printf '%s\n' kzpyj/naht kzpyj/dnfe | fh5dl -i -
+# one or more books
+fh5dl kzpyj/naht kzpyj/mdmp
+
+# choose where PDFs go
+fh5dl -o ~/Books https://online.fliphtml5.com/kzpyj/meoo/
+
+# a text file with one link per line
+fh5dl -i books.txt
+
+# a whole folder of .txt files
 fh5dl -i ./book-lists -o ./pdfs
-fh5dl tui -o ./pdfs
-fh5dl -t --force kzpyj/meoo
-fh5dl --version
+
+# from another command
+cat books.txt | fh5dl -i -
+
+# interactive mode
+fh5dl tui
 ```
 
-Supported inputs include bare `publisher/book`, scheme-less viewer URLs, `online.fliphtml5.com/<publisher>/<book>/index.html`, query strings and page fragments, and `fliphtml5.com/<publisher>/<book>/<slug>/`. For `/book/<number>` share links, open the viewer and copy its `online.fliphtml5.com` URL.
+Any of these link styles work:
 
-Each input file may contain several URLs, one per line. Blank lines and lines starting with `#` are ignored. A directory reads its immediate `.txt` files in filename order. Duplicate books are removed across all arguments and lists. Output filenames use a portable, bounded title plus publisher/book IDs, so equal titles stay separate. Existing PDFs are skipped unless `--force` replaces them with a freshly generated PDF.
+```text
+https://online.fliphtml5.com/kzpyj/meoo/
+online.fliphtml5.com/kzpyj/meoo/index.html#p=3
+https://fliphtml5.com/kzpyj/meoo/some-book-title/
+www.fliphtml5.com/kzpyj/meoo/
+kzpyj/meoo
+```
 
-| Flag | Purpose |
+Got a `fliphtml5.com/book/12345` share link instead? Open it in a browser and copy the `online.fliphtml5.com/...` address it takes you to.
+
+In list files, blank lines and lines starting with `#` are skipped, and duplicates are only downloaded once. If a PDF already exists, fh5dl skips it. Use `--force` to rebuild it.
+
+### Flags
+
+| Flag | What it does |
 | --- | --- |
-| `-o, --output DIR` | Output directory (default: current directory) |
-| `-j, --jobs N` | Total request/conversion concurrency, 1–8 (default: 8) |
-| `-i, --input PATH` | File, stdin (`-`), or directory; repeatable |
-| `-f, --force` | Replace existing PDFs |
-| `--keep-images` | Retain the current run's unique book-scoped image directory |
-| `--lossless` | Preserve original WebP images instead of converting to JPEG |
-| `-q, --quiet` | Suppress CLI progress and summary |
-| `-v, --verbose` | Include retry diagnostics |
-| `-t, --tui` | Open the Bubble Tea UI (also `fh5dl tui`) |
-| `--version` | Version and commit, with Go build-info fallback |
+| `-o, --output DIR` | Where to save PDFs (default: current folder) |
+| `-i, --input SRC` | Read links from a file, a folder of `.txt` files, or `-` for stdin. Can be repeated |
+| `-j, --jobs N` | Parallel downloads, 1 to 8 (default 8) |
+| `-f, --force` | Rebuild PDFs that already exist |
+| `--lossless` | Keep the original WebP images (bigger PDFs) |
+| `--keep-images` | Keep the downloaded page images next to the PDF |
+| `-t, --tui` | Interactive mode, same as `fh5dl tui` |
+| `-q, --quiet` | Only print errors |
+| `-v, --verbose` | Show retries and other details |
+| `--version` | Print the version |
 
-The TUI accepts normal text, including `q`, `y`, `n` and Unicode. Enter explicitly submits; Esc or Ctrl-C cancels. CLI output paths go to stdout; progress, errors and batch summaries go to stderr. Non-terminal progress uses plain lines. Batches run at most two books concurrently, sharing the `--jobs` limit. Ctrl-C cancels requests, retry waits and PDF generation.
+### Exit codes
 
-| Exit | Meaning |
+| Code | Meaning |
 | --- | --- |
-| 0 | All books downloaded or skipped; help/version |
-| 1 | At least one download failed |
-| 2 | Invalid arguments, input lists, or no URLs |
-| 130 | Interrupted/cancelled |
+| `0` | Everything downloaded or was already there |
+| `1` | At least one book failed |
+| `2` | Bad arguments or no links given |
+| `130` | You pressed Ctrl-C |
 
-## Output and limits
+Progress goes to stderr and the saved PDF paths go to stdout, so `fh5dl -i list.txt > saved.txt` gives you a clean list of files.
 
-JPEG bytes are embedded unchanged. By default WebP pages become quality-90 JPEGs for smaller PDFs and faster generation; this conversion is lossy. `--lossless` retains the source pixels but can produce substantially larger PDFs. Images are validated before import, written through `.part` files, and never reused from previous runs. Temporary images and incomplete PDFs are removed unless `--keep-images` is set (that flag retains images only).
+## What you get
 
-PDFs contain static page images. They do not preserve searchable text, links, audio, video, animations or hidden annotation content. Version 2 removes the old `--interactive` browser capture because it duplicated spreads and included consent banners. Books with multiple component images per logical page are rejected with an explicit error until their layout can be reconstructed correctly. There is no fixed page-count cap.
+Each PDF page is the book's page image. Most FlipHTML5 books store pages as WebP, which fh5dl converts to high quality JPEG. The PDFs come out several times smaller and build faster that way. If you'd rather keep the original pixels, pass `--lossless`.
 
-Private/restricted/removed books return a clear 403 error; missing books return 404. The downloader does not bypass access controls. Config responses are limited to 16 MiB, images to 64 MiB and 40 megapixels. Only transient failures (timeouts, incomplete transfers, 429 and 5xx) are retried, up to three attempts with cancellable backoff and `Retry-After` support. Missing/forbidden images also try documented large/page paths and JPEG/WebP alternatives.
+The PDF doesn't include searchable text, links, audio, video or pop-up content. It's a picture of each page, the same as what you see in the viewer.
 
-For compatibility surveys, `fh5dl --check URL...` GETs and validates every page image, processes books sequentially, and emits one JSON record per book (counts, formats and missing pages). It creates no PDFs or image files.
+Private or removed books fail with a clear `403` or `404` message. fh5dl only downloads books that are publicly viewable, and it doesn't try to get around access controls.
 
-## Development
+<details>
+<summary>How it works</summary>
+
+FlipHTML5 now encodes the page list inside each book's `javascript/config.js`. fh5dl decodes that in plain Go, so there's no browser or Chrome involved. It then downloads the page images in parallel over one shared connection pool and builds the PDF. Before saving, it checks that the page count matches the book.
+
+Temporary files and half written PDFs are cleaned up. Timeouts, dropped connections, `429` and `5xx` responses are retried up to three times. Missing pages are not retried.
+
+There's also a hidden `--check` flag that fetches every page image and prints a JSON line per book without writing any PDFs. It's handy for testing many books at once.
+
+</details>
+
+<details>
+<summary>Upgrading from 0.x</summary>
+
+- The old version stopped working when FlipHTML5 changed its config format. Version 2 handles the new format.
+- `--interactive` (the Chrome screenshot mode) is gone. It saved wrong pages, with both halves of a spread and a cookie banner.
+- `-c` is now `-j`, and list files now read every line instead of only the first.
+
+</details>
+
+## Building from source
 
 ```sh
+git clone https://github.com/f1amee-dev/fh5dl
+cd fh5dl
 go build -o fh5dl ./cmd/fh5dl
-go vet ./...
 go test -race ./...
-goreleaser check
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [decoder fixture notes](internal/book/testdata/README.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more.
+
+## License
+
+[MIT](LICENSE). Originally forked from [ygunayer/fh5dl](https://github.com/ygunayer/fh5dl).

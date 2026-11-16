@@ -8,6 +8,7 @@ import (
 	"math/rand/v2"
 	"net"
 	"net/http"
+	"slices"
 	"strconv"
 	"syscall"
 	"time"
@@ -60,7 +61,8 @@ func wait(ctx context.Context, d time.Duration) error {
 func transient(err error) bool {
 	var n net.Error
 	return errors.As(err, &n) && n.Timeout() || errors.Is(err, io.ErrUnexpectedEOF) ||
-		errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE)
+		errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) ||
+		slices.ContainsFunc(platformResets, func(e syscall.Errno) bool { return errors.Is(err, e) })
 }
 
 func (e *Engine) fetch(ctx context.Context, u string, limit int64) ([]byte, error) {

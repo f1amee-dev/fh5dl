@@ -9,12 +9,15 @@ import (
 	"image/color"
 	"image/jpeg"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -330,5 +333,14 @@ func TestLongAliasesAndIdentity(t *testing.T) {
 	}
 	if Filename("title", "pub-a/book") == Filename("title", "pub/a-book") {
 		t.Fatal("ambiguous identity suffix")
+	}
+}
+
+func TestConnectionResetsAreTransient(t *testing.T) {
+	for _, e := range append([]syscall.Errno{syscall.ECONNRESET, syscall.EPIPE}, platformResets...) {
+		err := &url.Error{Op: "Get", URL: "u", Err: &net.OpError{Op: "read", Err: os.NewSyscallError("wsarecv", e)}}
+		if !transient(err) {
+			t.Fatal(e)
+		}
 	}
 }
