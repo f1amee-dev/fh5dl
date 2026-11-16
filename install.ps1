@@ -36,15 +36,16 @@ Write-Host "Installed $(& "$dir\fh5dl.exe" --version) to $dir"
 
 # A ready-to-use PowerShell window: a Start menu shortcut, and one opened now.
 $welcome = "fh5dl --help; Write-Host; Write-Host 'fh5dl is ready. Type fh5dl and a space, paste a link, press Enter.'"
-$downloads = Join-Path $env:USERPROFILE 'Downloads'
-if (-not (Test-Path $downloads)) { $downloads = $env:USERPROFILE }
+# The Downloads known folder, which can be redirected (e.g. to OneDrive).
+$downloads = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
+if (-not $downloads -or -not (Test-Path $downloads)) { $downloads = $env:USERPROFILE }
 $s = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'fh5dl.lnk'))
 $s.TargetPath = 'powershell.exe'
 $s.Arguments = "-NoExit -Command `"$welcome`""
 $s.WorkingDirectory = $downloads
 $s.Save()
 
-if ($env:CI -or $env:FH5DL_NO_OPEN) {
+if ($env:CI -or $env:SSH_CONNECTION -or $env:FH5DL_NO_OPEN) {
     Write-Host 'Open a new terminal and run: fh5dl'
 } else {
     Start-Process powershell.exe -WorkingDirectory $downloads -ArgumentList '-NoExit', '-Command', $welcome

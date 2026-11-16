@@ -50,23 +50,36 @@ mv "$tmp/fh5dl" "$dir/fh5dl"
 chmod +x "$dir/fh5dl"
 echo "Installed $("$dir/fh5dl" --version) to $dir/fh5dl"
 
+# Single-quote a value for any shell (sh, bash, zsh, fish).
+q() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+
 # Put the folder on PATH for new terminals.
 case ":$PATH:" in
 *":$dir:"*) ;;
 *)
 	case "${SHELL:-}" in
-	*zsh) rc=$HOME/.zshrc ;;
-	*bash) rc=$HOME/.bashrc ;;
-	*) rc=$HOME/.profile ;;
+	*zsh) rc=$HOME/.zshrc line="export PATH=$(q "$dir"):\"\$PATH\"" ;;
+	*bash)
+		rc=$HOME/.bashrc line="export PATH=$(q "$dir"):\"\$PATH\""
+		# macOS Terminal starts bash as a login shell, which skips .bashrc.
+		[ "$os" = darwin ] && rc=$HOME/.bash_profile
+		;;
+	*fish)
+		rc=$HOME/.config/fish/conf.d/fh5dl.fish line="set -gx PATH $(q "$dir") \$PATH"
+		mkdir -p "$(dirname "$rc")"
+		;;
+	*) rc=$HOME/.profile line="export PATH=$(q "$dir"):\"\$PATH\"" ;;
 	esac
-	line="export PATH=\"$dir:\$PATH\""
 	grep -qsF "$line" "$rc" || printf '\n# fh5dl\n%s\n' "$line" >>"$rc"
 	echo "Added $dir to PATH in $rc"
 	;;
 esac
 
-# Open a fresh terminal with fh5dl ready, unless this is CI, SSH or opted out.
-welcome="cd \"$HOME/Downloads\" 2>/dev/null; clear; export PATH=\"$dir:\$PATH\"; fh5dl --help; echo; echo 'fh5dl is ready. Type fh5dl and a space, paste a link, press Enter.'"
+# Open a fresh terminal in Downloads with fh5dl ready, unless this is CI, SSH
+# or opted out. The commands work in sh, bash, zsh and fish.
+downloads=$HOME/Downloads
+[ "$os" = linux ] && downloads=$(xdg-user-dir DOWNLOAD 2>/dev/null || echo "$downloads")
+welcome="cd $(q "$downloads"); clear; $(q "$dir/fh5dl") --help; echo; echo 'fh5dl is ready. Type fh5dl and a space, paste a link, press Enter.'"
 if [ -n "${CI:-}${SSH_CONNECTION:-}${FH5DL_NO_OPEN:-}" ]; then
 	echo "Open a new terminal and run: fh5dl"
 elif [ "$os" = darwin ]; then
@@ -76,7 +89,7 @@ elif [ "$os" = darwin ]; then
 		-e 'tell application "Terminal" to activate' >/dev/null
 	echo "Opened a new Terminal window with fh5dl ready."
 elif [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v x-terminal-emulator >/dev/null 2>&1; then
-	x-terminal-emulator -e sh -c "$welcome; exec \${SHELL:-sh}" >/dev/null 2>&1 &
+	x-terminal-emulator -e sh -c "$welcome; exec \"\${SHELL:-sh}\"" >/dev/null 2>&1 &
 	echo "Opened a new terminal window with fh5dl ready."
 else
 	echo "Open a new terminal and run: fh5dl"
