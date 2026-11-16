@@ -166,7 +166,7 @@ func ParseConfig(id string, data []byte) (Book, error) {
 		if parseErr != nil {
 			return Book{}, fmt.Errorf("page %d image URL: %w", i+1, parseErr)
 		}
-		if !initial.IsAbs() && !strings.Contains(name, "/") {
+		if !initial.IsAbs() && initial.Host == "" && !strings.Contains(initial.Path, "/") {
 			name = strings.TrimRight(prefix, "/") + "/" + name
 		}
 		ref, err := url.Parse(name)

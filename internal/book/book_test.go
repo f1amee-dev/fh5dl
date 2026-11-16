@@ -100,7 +100,7 @@ func FuzzDecoder(f *testing.F) {
 	f.Fuzz(func(t *testing.T, s string) { _, _ = DecodeString(s) })
 }
 func TestConfigURLs(t *testing.T) {
-	for _, tc := range []struct{ name, want string }{{"1.webp", "https://online.fliphtml5.com/pub/book/files/large/1.webp"}, {"./files/page/1.jpg", "https://online.fliphtml5.com/pub/book/files/page/1.jpg"}, {"//cdn.example/1.jpg", "https://cdn.example/1.jpg"}, {"/1.jpg", "https://online.fliphtml5.com/1.jpg"}, {"https://cdn.example/1.jpg?q=1", "https://cdn.example/1.jpg?q=1"}} {
+	for _, tc := range []struct{ name, want string }{{"1.webp", "https://online.fliphtml5.com/pub/book/files/large/1.webp"}, {"./files/page/1.jpg", "https://online.fliphtml5.com/pub/book/files/page/1.jpg"}, {"//cdn.example/1.jpg", "https://cdn.example/1.jpg"}, {"/1.jpg", "https://online.fliphtml5.com/1.jpg"}, {"https://cdn.example/1.jpg?q=1", "https://cdn.example/1.jpg?q=1"}, {"1.jpg?t=a/b", "https://online.fliphtml5.com/pub/book/files/large/1.jpg?t=a/b"}} {
 		data := fmt.Sprintf(`var htmlConfig = {"fliphtml5_pages":[{"n":%q}]}; var other = {};`, tc.name)
 		b, err := ParseConfig("pub/book", []byte(data))
 		if err != nil || b.Pages[0] != tc.want {
